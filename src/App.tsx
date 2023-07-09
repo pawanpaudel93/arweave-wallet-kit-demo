@@ -9,25 +9,24 @@ function App() {
   const { connected } = useConnection();
   const api = useApi();
   const [connectedAddress, setConnectedAddress] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   async function getConnectedAddress() {
     try {
-      // setConnectedAddress(await window.arweaveWallet.getActiveAddress());
+      // const address = await window.arweaveWallet.getActiveAddress();
       const address = await api?.getActiveAddress();
       if (address) setConnectedAddress(address);
     } catch (error) {
       console.error(error);
-      alert("Failed to get active address: " + String(error));
+      setErrorMessage("Failed to get active address: " + String(error));
     }
   }
 
   useEffect(() => {
     if (connected) {
-      setTimeout(() => {
-        {
-          void getConnectedAddress();
-        }
-      }, 500);
+      void getConnectedAddress();
+    } else {
+      setErrorMessage("");
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -49,10 +48,20 @@ function App() {
         <div style={{ display: "flex", justifyContent: "center" }}>
           <ConnectButton profileModal={false} showBalance={true} />
         </div>
-        <p>
-          Connected address with `useApi` hook: <b>{connectedAddress}</b>
-          <br />
-        </p>
+        <div>
+          Connected address with `useApi` hook:{" "}
+          <b style={{ color: "green" }}>{connectedAddress}</b>
+        </div>
+        {errorMessage && (
+          <div
+            style={{
+              color: "red",
+            }}
+          >
+            Error: {errorMessage}
+          </div>
+        )}
+        <br />
       </div>
     </>
   );

@@ -16,6 +16,7 @@ function App() {
       const address = await api?.getActiveAddress();
       if (address) setConnectedAddress(address);
     } catch (error) {
+      console.error(error);
       alert("Failed to get active address: " + String(error));
     }
   }

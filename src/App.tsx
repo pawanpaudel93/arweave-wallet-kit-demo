@@ -1,6 +1,5 @@
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
-//@ts-expect-error don't check types
 import { ConnectButton, useApi, useConnection } from "arweave-wallet-kit";
 import { useEffect, useState } from "react";
 import "./App.css";

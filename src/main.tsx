@@ -1,6 +1,5 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-//@ts-expect-error don't check types
 import { ArweaveWalletKit } from "arweave-wallet-kit";
 import App from "./App.tsx";
 import "./index.css";

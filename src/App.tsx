@@ -12,7 +12,7 @@ import {
 import { useDropzone } from "react-dropzone";
 import { FormEvent, useEffect, useState } from "react";
 import "react-dropzone/examples/theme.css";
-import { useApi, useConnection } from "arweave-wallet-kit";
+import { useActiveAddress, useApi, useConnection } from "arweave-wallet-kit";
 import Arweave from "arweave";
 import ArDB from "ardb";
 import mime from "mime";
@@ -24,6 +24,7 @@ function App() {
   const toast = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const { connected } = useConnection();
+  const activeAddress = useActiveAddress();
   const walletApi = useApi();
   const [files, setFiles] = useState<(File & { preview: string })[]>([]);
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
@@ -143,6 +144,7 @@ function App() {
       const txs = await ardb
         .search("transactions")
         .tag("App-Name", "Arweave Wallet Kit Demo")
+        .from(activeAddress as string)
         .only("id")
         .findAll();
 
@@ -159,8 +161,11 @@ function App() {
   }, [files]);
 
   useEffect(() => {
-    void fetchAllImages();
-  }, []);
+    if (activeAddress) {
+      void fetchAllImages();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeAddress]);
 
   return (
     <Container py={8} maxW="6xl">

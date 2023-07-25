@@ -17,7 +17,11 @@ import Arweave from "arweave";
 import ArDB from "ardb";
 import mime from "mime";
 
-const arweave = Arweave.init({});
+const arweave = Arweave.init({
+  host: "arweave.net",
+  port: 443,
+  protocol: "https",
+});
 const ardb = new ArDB(arweave);
 
 function App() {

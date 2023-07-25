@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import {
   Container,
   Flex,
@@ -5,14 +6,19 @@ import {
   Button,
   VStack,
   useToast,
+  Text,
+  Center,
 } from "@chakra-ui/react";
 import { useDropzone } from "react-dropzone";
 import { FormEvent, useEffect, useState } from "react";
 import "react-dropzone/examples/theme.css";
 import { useApi, useConnection } from "arweave-wallet-kit";
 import Arweave from "arweave";
+import ArDB from "ardb";
+import mime from "mime";
 
 const arweave = Arweave.init({});
+const ardb = new ArDB(arweave);
 
 function App() {
   const toast = useToast();
@@ -20,6 +26,7 @@ function App() {
   const { connected } = useConnection();
   const walletApi = useApi();
   const [files, setFiles] = useState<(File & { preview: string })[]>([]);
+  const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
   const { getRootProps, getInputProps } = useDropzone({
     accept: { "image/*": [] }, // Accept all image files
     onDrop: (acceptedFiles) => {
@@ -43,7 +50,7 @@ function App() {
       marginRight={8}
       width={100}
       height={100}
-      padding={4}
+      padding={2}
       boxSizing="border-box"
     >
       <Flex minWidth={0} overflow="hidden">
@@ -80,19 +87,33 @@ function App() {
     }
   }
 
-  async function upload(e: FormEvent) {
+  async function upload(e: FormEvent): Promise<void> {
     e.preventDefault();
     setIsLoading(true);
     try {
       const promises = files.map(async (file) => {
-        const data = await new Response(file).arrayBuffer();
-        const transaction = await arweave.createTransaction({
-          data,
-        });
-        transaction.addTag("App-Name", "Arweave Wallet Kit Demo");
-        transaction.addTag("Content-Type", file.type);
-        await walletApi?.sign(transaction);
-        await arweave.transactions.post(transaction);
+        try {
+          const data = await new Response(file).arrayBuffer();
+          const transaction = await arweave.createTransaction({
+            data,
+          });
+          transaction.addTag("App-Name", "Arweave Wallet Kit Demo");
+          transaction.addTag(
+            "Content-Type",
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+            file.type ?? mime.getType(file.name)
+          );
+          await walletApi?.sign(transaction);
+          const response = await arweave.transactions.post(transaction);
+          if (response.status === 200) {
+            setUploadedUrls((prev) => [
+              ...prev,
+              `https://arweave.net/${transaction.id}`,
+            ]);
+          }
+        } catch (error) {
+          console.log(error);
+        }
       });
       await Promise.all(promises);
       toast({
@@ -117,15 +138,33 @@ function App() {
     setIsLoading(false);
   }
 
+  async function fetchAllImages() {
+    try {
+      const txs = await ardb
+        .search("transactions")
+        .tag("App-Name", "Arweave Wallet Kit Demo")
+        .only("id")
+        .findAll();
+
+      setUploadedUrls(txs.map((tx) => `https://arweave.net/${tx.id}`));
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   useEffect(() => {
     // Make sure to revoke the data URIs to avoid memory leaks, this will run on unmount
     return () => files.forEach((file) => URL.revokeObjectURL(file.preview));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [files]);
 
+  useEffect(() => {
+    void fetchAllImages();
+  }, []);
+
   return (
     <Container py={8} maxW="6xl">
-      <form onSubmit={void upload}>
+      <form onSubmit={upload}>
         <VStack w="100%">
           <Box className="container" w="full">
             <Box
@@ -152,6 +191,41 @@ function App() {
           </Button>
         </VStack>
       </form>
+      {uploadedUrls.length > 0 && (
+        <Box mt={8}>
+          <Center mb={4}>
+            <Text fontSize="xl" fontWeight="bold">
+              Uploaded Images
+            </Text>
+          </Center>
+          {uploadedUrls.map((url, index) => (
+            <Box
+              key={index}
+              display="inline-flex"
+              borderRadius={2}
+              border="1px solid #eaeaea"
+              marginBottom={8}
+              marginRight={8}
+              width={100}
+              height={100}
+              padding={2}
+              boxSizing="border-box"
+            >
+              <Flex minWidth={0} overflow="hidden">
+                <img
+                  src={url}
+                  alt={""}
+                  style={{
+                    display: "block",
+                    width: "auto",
+                    height: "100%",
+                  }}
+                />
+              </Flex>
+            </Box>
+          ))}
+        </Box>
+      )}
     </Container>
   );
 }

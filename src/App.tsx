@@ -109,8 +109,8 @@ function App() {
             file.type ?? mime.getType(file.name)
           );
           await walletApi?.sign(transaction);
-          const response = await arweave.transactions.post(transaction);
-          if (response.status === 200) {
+          const response = await walletApi?.dispatch(transaction);
+          if (response?.id) {
             setUploadedUrls((prev) => [
               ...prev,
               `https://arweave.net/${transaction.id}`,

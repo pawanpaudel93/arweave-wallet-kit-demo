@@ -16,7 +16,7 @@
     "@emotion/styled": "^11.11.0",
     "arconnect": "^0.4.2",
     "ardb": "^1.1.10",
-    "arweave-wallet-kit": "^1.0.1",
+    "arweave-wallet-kit": "^1.0.2",
     "framer-motion": "^10.13.1",
     "mime": "^3.0.0",
     "react": "^18.2.0",
@@ -34,6 +34,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.1",
     "typescript": "^5.0.2",
-    "vite": "^4.4.0"
+    "vite": "^4.4.0",
+    "vite-plugin-node-polyfills": "^0.11.2"
   }
 }
